@@ -27,7 +27,7 @@ class MyTextFormField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _phoneController,
-      : validator,
+      validator: validator,
       maxLines: maxLines,
       minLines: minLines,
       keyboardType: keyboardType,
