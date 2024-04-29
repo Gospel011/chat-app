@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -10,6 +9,7 @@ class MyTextFormField extends StatelessWidget {
       this.keyboardType,
       this.maxLines,
       this.minLines,
+      this.onChanged,
       this.inputFormatters,
       required this.validator})
       : _phoneController = controller;
@@ -22,6 +22,7 @@ class MyTextFormField extends StatelessWidget {
   final TextEditingController _phoneController;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
+  final void Function(String)? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +32,7 @@ class MyTextFormField extends StatelessWidget {
       maxLines: maxLines,
       minLines: minLines,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hintText,

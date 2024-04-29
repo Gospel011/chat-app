@@ -3,13 +3,13 @@
 import 'dart:ui';
 
 class NetWorkConstants {
-  // static const String baseUrl = 'https://8a63-2c0f-2a80-4-6910-dc3f-8434-67c8-3fed.ngrok-free.app';
+  // static const String baseUrl = 'https://55ae-102-90-10-246.ngrok-free.app';
   // static const String baseUrl = 'http://127.0.0.1:3000';
-  static const String baseUrl = 'http://chatapp-nxze.onrender.com';
+  static const String baseUrl = 'https://chatapp-nxze.onrender.com';
 }
 
 
 class AppColors {
-  static const deepPurple = Color(0xFFC8B1DF);
+  static const deepPurple = Color.fromARGB(255, 127, 108, 146);
   static const lightPurple =  Color(0xFFE6E6FA);
 }

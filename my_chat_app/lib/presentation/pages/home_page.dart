@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -7,6 +8,7 @@ import 'package:my_chat_app/business_logic/auth/auth_cubit.dart';
 import 'package:my_chat_app/business_logic/chat/chat_cubit.dart';
 import 'package:my_chat_app/data_layer/models/chat_model.dart';
 import 'package:my_chat_app/data_layer/models/user_model.dart';
+import 'package:my_chat_app/presentation/helpers/stream_helper.dart';
 import 'package:my_chat_app/presentation/widgets/my_text_form_field.dart';
 import 'package:my_chat_app/utils/constants.dart';
 import 'package:my_chat_app/presentation/pages/login_page.dart';
@@ -23,6 +25,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late IO.Socket socket;
+  late StreamHelper typingStream;
 
   final TextEditingController controller = TextEditingController();
   late final User user;
@@ -49,11 +52,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     establishConnection();
     user = context.read<AuthCubit>().state.user!;
+    typingStream = StreamHelper();
   }
 
   @override
   void dispose() {
     socket.disconnect();
+    typingStream.close();
     print("Called dispose");
     super.dispose();
   }
@@ -82,6 +87,11 @@ class _HomePageState extends State<HomePage> {
       print("Total clients: $data");
     });
 
+    socket.on('typing', (data) {
+      print("typing state: $data");
+      typingStream.add(data);
+    });
+
     socket.on('new message', (data) {
       print("New message recieved");
       Chat chat = Chat.fromMap(jsonDecode(data));
@@ -90,7 +100,11 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Timer? timer;
+
   void sendMessage() {
+    timer?.cancel();
+    socket.emit("typing", "");
     Chat chat =
         Chat(user: user, message: controller.text, dateTime: DateTime.now());
 
@@ -98,22 +112,58 @@ class _HomePageState extends State<HomePage> {
 
     controller.text = "";
 
+    FocusManager.instance.primaryFocus?.unfocus();
+
     context.read<ChatCubit>().addChat(chat);
+  }
+
+  
+
+  void onChanged(String value) {
+    if (timer?.isActive == true) {
+      timer?.cancel();
+      socket.emit('typing',
+          '${context.read<AuthCubit>().state.user!.name.split(' ')[0]} is typing');
+      print(
+          '${context.read<AuthCubit>().state.user!.name.split(' ')[0]} is typing');
+      timer = Timer(const Duration(seconds: 3), () {
+        socket.emit('typing', "");
+        print("Not typing");
+      });
+    } else {
+      timer = Timer(const Duration(seconds: 2), () {
+        print("Empty timer");
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Home"), actions: [
-        IconButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                  (route) => false);
+      appBar: AppBar(
+          title: StreamBuilder(
+            stream: typingStream.stream,
+            initialData: "",
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              print("Current snapshot: ${snapshot.data}");
+              return ListTile(
+                  title: const Text("Chat"),
+                  subtitle: snapshot.hasData && snapshot.data != ""
+                      ? Text(snapshot.data)
+                      : null);
             },
-            icon: const Icon(Icons.logout))
-      ]),
+          ),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
+                      (route) => false);
+                },
+                icon: const Icon(Icons.logout))
+          ]),
       body: SizedBox(
         width: double.maxFinite,
         child: Stack(
@@ -163,6 +213,7 @@ class _HomePageState extends State<HomePage> {
                               child: MyTextFormField(
                                   controller: controller,
                                   validator: validator,
+                                  onChanged: onChanged,
                                   maxLines: 5,
                                   minLines: 1),
                             ),
@@ -175,7 +226,7 @@ class _HomePageState extends State<HomePage> {
                                     print("Sending message");
 
                                     sendMessage();
-                                  }
+                                  }ilesCot
                                 },
                                 icon: Icon(Icons.send)),
                           )
